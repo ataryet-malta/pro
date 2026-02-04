@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl" manifest="cache.manifest">
 <head>
     <meta charset="UTF-8">
-    <title>Malta Pro - Ultimate Stable V2</title>
+    <title>Malta Pro - Ultimate Stable V2.2</title>
 
     <style>
         @font-face { font-family: 'Orbitron'; src: url('orbitron.woff2') format('woff2'); font-weight: bold; font-display: swap; }
@@ -77,11 +77,6 @@
         <button class="palette-btn" style="color: var(--neon-blue); border-color: var(--neon-blue);" onclick="checkPass()">ACCESS SYSTEM</button>
     </div>
 
-    <div id="cache-overlay" style="position:fixed; inset:0; background:#000; z-index:2000; display:none; align-items:center; justify-content:center; flex-direction:column;">
-        <h3 style="color: var(--neon-blue); letter-spacing: 5px;">DOWNLOADING DATA...</h3>
-        <div style="width: 300px; height: 4px; background: #111;"><div id="cache-progress" style="width: 0%; height: 100%; background: var(--neon-blue);"></div></div>
-    </div>
-
     <canvas id="matrix-canvas"></canvas>
     <div id="left-smart-report"></div>
 
@@ -118,14 +113,9 @@
     </div>
 
     <script>
-        // دمج ملفات utils و config المفقودة برمجياً لمنع خطأ Null
-        window.utils = {
-            log: function(msg) { console.log(msg); if(typeof addLog === 'function') addLog(msg); }
-        };
-        window.config = {
-            test_mode: false,
-            auto_exploit: true
-        };
+        // إعدادات النظام المدمجة
+        window.utils = { log: function(msg) { console.log(msg); if(typeof addLog === 'function') addLog(msg); } };
+        window.config = { test_mode: false, auto_exploit: true };
 
         const ftpBase = "http://127.0.0.1:2121";
         const sourceDir = "/data/malta/game_saves";
@@ -205,7 +195,6 @@
                 
                 document.getElementById('n_jail').className = 'node done';
                 addLog("INJECTING PAYLOAD...");
-                
                 document.getElementById('n1').className = 'node done';
                 document.getElementById('n2').className = 'node done';
                 out.innerHTML = `ROOTED!`;
@@ -249,24 +238,44 @@
         async function showReport() {
             const counterEl = document.getElementById('copied-counter');
             try {
-                const listRes = await fetch(`${ftpBase}/list?path=${sourceDir}`);
+                addLog("CONNECTING TO FTP...", "info");
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                const listRes = await fetch(`${ftpBase}/list?path=${sourceDir}`, {
+                    signal: controller.signal
+                }).catch(e => { throw new Error("FTP_UNREACHABLE"); });
+
+                clearTimeout(timeoutId);
+                if (!listRes.ok) throw new Error("DIRECTORY_NOT_FOUND");
+
                 const items = await listRes.json();
+                if (items.length === 0) {
+                    addLog("NO FILES TO COPY", "info");
+                    return;
+                }
+
                 let count = 0;
                 for (let item of items) {
-                    addLog(`COPYING: ${item.substring(0,25)}...`);
+                    addLog(`SYNCING: ${item.substring(0,20)}...`);
                     await fetch(`${ftpBase}/delete?path=/user/home/${currentUser}/savedata/${item}`).catch(()=>{});
                     const copyRes = await fetch(`${ftpBase}/copy?from=${sourceDir}/${item}&to=/user/home/${currentUser}/savedata/${item}`);
+                    
                     if(copyRes.ok) { 
                         count++; 
                         counterEl.innerText = count;
                         let p = count / items.length;
-                        matrixColor = `rgb(${Math.floor(0*(1-p) + 0*p)}, ${Math.floor(212*(1-p) + 255*p)}, ${Math.floor(255*(1-p) + 65*p)})`;
+                        matrixColor = `rgb(0, ${Math.floor(212 + (43 * p))}, ${Math.floor(255 - (190 * p))})`;
                     }
                     await new Promise(r => setTimeout(r, 80));
                 }
-            } catch(e) { addLog("SYNC ERROR", "info"); }
+                addLog("SYNC SUCCESSFUL", "success");
+            } catch(e) { 
+                addLog(`SYNC ERROR: ${e.message}`, "info"); 
+            }
         }
 
+        // Matrix Background Logic
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
