@@ -1,5 +1,14 @@
 CACHE MANIFEST
-# v2.1
+# Malta Pro Ultimate Stable V2.2
+# Date: 2026-02-05
+
+CACHE:
 index.html
 orbitron.woff2
 psfree.js
+
+NETWORK:
+*
+
+SETTINGS:
+prefer-online
