@@ -1,0 +1,21 @@
+CACHE MANIFEST 
+
+# Malta Pro - PSFree Ultimate Edition
+# Version: 14.6
+# Date: 2026-02-04
+# هذا الملف يضمن التخزين الكامل للثغرة وتشغيلها تلقائياً بدون إنترنت
+
+CACHE:
+index.html
+goldhen.bin
+orbitron.woff2
+psfree.mjs
+alert.mjs
+config.mjs
+lapse.mjs
+send.mjs
+psfree_lapse.cache
+aio_patches.bin
+
+NETWORK:
+*
