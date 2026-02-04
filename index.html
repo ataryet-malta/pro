@@ -117,30 +117,29 @@
         </div>
     </div>
 
-    <script type="module" src="config.mjs"></script>
-    <script type="module" src="alert.mjs"></script>
-    <script type="module" src="psfree.mjs"></script>
-    <script type="module" src="lapse.mjs"></script>
-    <script type="module" src="send.mjs"></script>
-
 <script>
+    // تهيئة المتغيرات الأساسية
     const ftpBase = "http://127.0.0.1:2121";
     const sourceDir = "/data/malta/game_saves";
     let currentUser = "10000000"; 
     let matrixColor = "#00d4ff";
 
+    // دالة الساعة الرقمية
     function updateClock() {
         const now = new Date();
         const h = String(now.getHours()).padStart(2, '0');
         const m = String(now.getMinutes()).padStart(2, '0');
         const s = String(now.getSeconds()).padStart(2, '0');
         const ms = String(now.getMilliseconds()).padStart(3, '0');
-        document.getElementById('cyber-clock').innerText = `${h}:${m}:${s}.${ms}`;
+        const el = document.getElementById('cyber-clock');
+        if(el) el.innerText = `${h}:${m}:${s}.${ms}`;
         requestAnimationFrame(updateClock);
     }
 
+    // إضافة السجلات للواجهة
     function addLog(msg, type='info') {
         const container = document.getElementById('left-smart-report');
+        if(!container) return;
         const entry = document.createElement('div');
         entry.className = `log-entry ${type}`;
         entry.innerHTML = `<div style="font-size:0.6em; opacity:0.5; margin-bottom:2px; text-align:left;">> SYSTEM_LOG</div>${msg}`;
@@ -148,6 +147,7 @@
         if(container.children.length > 8) container.lastChild.remove();
     }
 
+    // التحقق من الرقم السري
     function checkPass() {
         if(document.getElementById('passCode').value === "2580") {
             localStorage.setItem('malta_unlocked', 'true');
@@ -163,9 +163,12 @@
         localStorage.setItem('malta_kill_apps', document.getElementById('killAppsToggle').checked);
     }
 
+    // دالة الثغرة الأساسية
     async function launchPSFree() {
         const out = document.getElementById('output');
         const btn = document.getElementById('startBtn');
+        if(!out || !btn) return;
+        
         btn.disabled = true; btn.innerText = "WAITING...";
         addLog("INIT EXPLOIT CHAIN...");
         
@@ -179,16 +182,24 @@
             if(checkHen.ok) {
                 out.innerHTML = `HEN_ACTIVE`;
                 addLog("HEN DETECTED: OK", "success");
-                ['n_jail','n1','n2'].forEach(id => document.getElementById(id).className = 'node done');
+                ['n_jail','n1','n2'].forEach(id => {
+                    let node = document.getElementById(id);
+                    if(node) node.className = 'node done';
+                });
                 startMaltaSequence(); return;
             }
 
             out.innerHTML = `EXPLOITING...`;
             addLog("RUNNING WEBKIT...");
-            if (typeof window.psfree === "undefined") {
-                const { psfree } = await import('./psfree.mjs');
-                window.psfree = psfree;
-            }
+            
+            // تحميل الموديولات ديناميكياً لتجنب خطأ الـ Null
+            const configMod = await import('./config.mjs');
+            const alertMod = await import('./alert.mjs');
+            const psfreeMod = await import('./psfree.mjs');
+            const lapseMod = await import('./lapse.mjs');
+            const sendMod = await import('./send.mjs');
+            
+            window.psfree = psfreeMod.psfree;
             await window.psfree();
             document.getElementById('n_jail').className = 'node done';
             
@@ -258,18 +269,14 @@
         } catch(e) { addLog("SYNC ERROR", "info"); }
     }
 
+    // نظام الماتريكس
     const canvas = document.getElementById('matrix-canvas');
     const ctx = canvas.getContext('2d');
-    
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズヅブプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
-    const alphabet = katakana + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const alphabet = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピ우クスツヌフムユュル0123456789';
     const fontSize = 16;
     const columns = canvas.width / fontSize;
     const rainDrops = Array.from({ length: columns }).fill(1);
@@ -282,16 +289,17 @@
         for (let i = 0; i < rainDrops.length; i++) {
             const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
             ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
-            if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                rainDrops[i] = 0;
-            }
+            if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) rainDrops[i] = 0;
             rainDrops[i]++;
         }
     }
     setInterval(drawMatrix, 50);
 
     function initApp() {
-        if(localStorage.getItem('malta_unlocked') === 'true') document.getElementById('lock-screen').style.display = 'none';
+        if(localStorage.getItem('malta_unlocked') === 'true') {
+            let ls = document.getElementById('lock-screen');
+            if(ls) ls.style.display = 'none';
+        }
         document.getElementById('autoExitToggle').checked = localStorage.getItem('malta_auto_exit') !== 'false';
         document.getElementById('autoStartToggle').checked = localStorage.getItem('malta_auto_start') !== 'false';
         document.getElementById('killAppsToggle').checked = localStorage.getItem('malta_kill_apps') !== 'false';
@@ -299,8 +307,10 @@
         
         if (window.applicationCache) {
             window.applicationCache.addEventListener('onprogress', (e) => {
-                document.getElementById('cache-overlay').style.display = 'flex';
-                document.getElementById('cache-progress').style.width = Math.round((e.loaded / e.total) * 100) + '%';
+                let overlay = document.getElementById('cache-overlay');
+                let progress = document.getElementById('cache-progress');
+                if(overlay) overlay.style.display = 'flex';
+                if(progress) progress.style.width = Math.round((e.loaded / e.total) * 100) + '%';
             });
         }
     }
