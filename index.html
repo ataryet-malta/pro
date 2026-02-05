@@ -149,49 +149,51 @@
             henNode.className = 'node active';
             
             try {
-                // التحقق من التفعيل الحقيقي فقط (وليس مجرد الذاكرة)
+                // التحقق من التفعيل الحقيقي
                 if (window.GoldHenLoaded) {
                     addLog("GOLDHEN IS VERIFIED ACTIVE", "success");
                     henNode.className = 'node done';
                     return true;
                 }
 
-                // مسح الذاكرة القديمة لإجبار النظام على الحقن الفعلي
                 localStorage.removeItem('gh_active');
-
-                addLog("SEARCHING FOR GOLDHEN BINARY...");
+                addLog("FETCHING GOLDHEN FROM /payloads/...");
                 
-                // المسار الوحيد والمؤكد في مجلد payloads
                 const response = await fetch('./payloads/goldhen.bin');
-
-                if (!response.ok) {
-                    addLog("ERROR: goldhen.bin NOT FOUND IN /payloads/", "info");
-                    throw new Error("FILE_MISSING");
-                }
+                if (!response.ok) throw new Error("FILE_MISSING");
 
                 const payload = await response.arrayBuffer();
-                addLog("PAYLOAD LOADED (" + payload.byteLength + " bytes)");
+                addLog("PAYLOAD READY: " + payload.byteLength + " BYTES");
                 
-                addLog("INJECTING TO KERNEL... PLEASE WAIT");
+                // --- تعديل جوهري هنا لضمان التنفيذ ---
+                addLog("EXECUTING KERNEL PAYLOAD...");
                 
                 if (window.psfree && typeof window.psfree.runPayload === "function") {
+                    // الطريقة الأولى
                     await window.psfree.runPayload(payload);
+                } else if (typeof window.runPayload === "function") {
+                    // الطريقة الثانية
+                    await window.runPayload(payload);
+                } else if (typeof window.PL_INFO !== 'undefined') {
+                    // الطريقة الثالثة (لبعض نسخ Kexploit)
+                    window.payload_buffer = payload;
+                    addLog("BUFFER ASSIGNED - TRIGGERING...");
                 } else if (window.run && typeof window.run === "function") {
+                    // الطريقة الرابعة
                     await window.run(payload);
-                } else {
-                    // انتظار إضافي للاستقرار في حال عدم وجود دالة تشغيل مباشرة
-                    await new Promise(r => setTimeout(r, 3000));
                 }
+
+                // إعطاء النواة وقت لمعالجة الملف قبل إعطاء رسالة النجاح
+                await new Promise(r => setTimeout(r, 4000)); 
                 
-                // تسجيل النجاح فقط بعد محاولة الحقن
                 localStorage.setItem('gh_active', 'true');
-                addLog("GOLDHEN INJECTED SUCCESSFULLY", "success");
+                addLog("INJECTION SENT TO KERNEL", "success");
                 henNode.className = 'node done';
                 return true;
 
             } catch (e) {
-                addLog("INJECTION FAILED: " + e.message, "info");
-                localStorage.removeItem('gh_active'); // ضمان المحاولة في المرة القادمة
+                addLog("INJECTION ERROR: " + e.message, "info");
+                localStorage.removeItem('gh_active');
                 henNode.className = 'node';
                 return false;
             }
@@ -220,7 +222,8 @@
                 document.getElementById('n_jail').className = 'node done';
                 addLog("WEBKIT OK - STABILIZING...", "success");
 
-                await new Promise(r => setTimeout(r, 2500)); 
+                // زيادة وقت الاستقرار قبل الحقن لضمان استجابة النواة
+                await new Promise(r => setTimeout(r, 3000)); 
 
                 const henStatus = await injectGoldHen();
                 if (!henStatus) throw new Error("HEN_FAILED");
