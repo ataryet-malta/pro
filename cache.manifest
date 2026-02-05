@@ -18,6 +18,7 @@ lapse.mjs
 # المجلدات والملفات الفرعية
 module/utils.mjs
 fonts/orbitron.woff2
+payloads/goldhen.bin
 
 # ملاحظة: أضف مسارات أي ملفات إضافية موجودة داخل المجلدات التالية إذا لزم الأمر
 # kpatch/
@@ -29,4 +30,5 @@ NETWORK:
 
 SETTINGS:
 prefer-offline
+
 
