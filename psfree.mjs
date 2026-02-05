@@ -19,6 +19,7 @@
 
 /* تعديل Malta Pro V2.2 - النسخة المستقرة والحقيقية للحقن */
 
+import * as kex_module from './module/kexploit.mjs'; 
 import { Int } from './module/int64.mjs';
 import { Memory, mem } from './module/mem.mjs';
 import { KB, MB } from './module/offset.mjs';
@@ -291,7 +292,7 @@ async function runPayload(payloadBuffer) {
     if (!window.mem) die("Memory primitive not ready!");
     log("CRITICAL: SEARCHING FOR KERNEL ENTRY...");
     try {
-        const kex = await import('./module/kexploit.mjs');
+        const kex = kex_module; 
         log("KERNEL EXPLOIT LOADED. TRIGGERING...");
         await kex.run(payloadBuffer); 
         log("GOLDHEN INJECTED SUCCESSFULLY!");
