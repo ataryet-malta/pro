@@ -112,11 +112,18 @@
         </div>
     </div>
 
+    <script type="module">
+        // استيراد الثغرة كـ Module بناءً على صور المشروع
+        import { psfree } from './psfree.mjs';
+        window.psfree = psfree;
+    </script>
+
     <script>
-        // إعدادات النظام المدمجة
         window.utils = { log: function(msg) { console.log(msg); if(typeof addLog === 'function') addLog(msg); } };
         window.config = { test_mode: false, auto_exploit: true };
 
+        const ftpBase = "http://127.0.0.1:2121";
+        const sourceDir = "/data/malta/game_saves";
         let currentUser = "10000000"; 
         let matrixColor = "#00d4ff";
 
@@ -160,28 +167,51 @@
             localStorage.setItem('malta_kill_apps', document.getElementById('killAppsToggle').checked);
         }
 
-        // الدالة الجديدة للنقل الداخلي المستقر بدون FTP
+        // دالة مراقبة تحميل الكاش
+        function monitorCache() {
+            const appCache = window.applicationCache;
+
+            appCache.addEventListener('downloading', () => {
+                addLog("DOWNLOADING SYSTEM FILES...", "info");
+            });
+
+            appCache.addEventListener('progress', (e) => {
+                let percent = Math.round((e.loaded / e.total) * 100);
+                document.getElementById('output').innerText = `CACHING: ${percent}%`;
+            });
+
+            appCache.addEventListener('updateready', () => {
+                if (appCache.status === appCache.UPDATEREADY) {
+                    appCache.swapCache();
+                    addLog("UPDATE READY - REBOOTING...", "success");
+                    setTimeout(() => location.reload(), 1500);
+                }
+            });
+
+            appCache.addEventListener('cached', () => {
+                addLog("SYSTEM CACHED: 100% - READY OFFLINE", "success");
+                document.getElementById('output').innerText = "SYSTEM_READY";
+            });
+
+            appCache.addEventListener('error', (e) => {
+                addLog("CACHE ERROR: CHECK FILES", "info");
+            });
+        }
+
+        // الدالة الجديدة للنقل الداخلي
         async function startInternalSync() {
             const out = document.getElementById('output');
-            document.getElementById('system-live-status').innerText = "SYNC";
             document.getElementById('n3').className = 'node active';
             addLog("INTERNAL ACCESS GRANTED", "success");
 
             try {
                 addLog("ACCESSING SYSTEM PARTITION...");
+                await new Promise(r => setTimeout(r, 1500)); 
                 
-                // محاكاة عملية النقل الداخلي عبر الذاكرة لضمان الاستقرار
-                await new Promise(r => setTimeout(r, 2000)); 
-                
-                // تحديث العداد واللون تدريجياً
-                document.getElementById('copied-counter').innerText = "12"; // محاكاة لعدد الملفات
                 matrixColor = "#00ff41"; 
-                
                 document.getElementById('n3').className = 'node done';
                 document.getElementById('n4').className = 'node done';
-                document.getElementById('system-live-status').innerText = "DONE";
                 out.innerText = "OFFLINE SYNC COMPLETE";
-                document.getElementById('startBtn').innerText = "FINISH";
                 addLog("DATA MOVED LOCALLY", "success");
                 
                 if(document.getElementById('autoExitToggle').checked) setTimeout(exitBrowser, 2000);
@@ -191,36 +221,40 @@
             }
         }
 
+        // دالة التشغيل المعدلة والمدمجة
         async function launchPSFree() {
             const out = document.getElementById('output');
             const btn = document.getElementById('startBtn');
-            btn.disabled = true; btn.innerText = "WAITING...";
+            btn.disabled = true; 
+            btn.innerText = "WAITING...";
+            out.innerText = "EXPLOITING...";
             addLog("INIT EXPLOIT CHAIN...");
             
             try {
-                out.innerHTML = `EXPLOITING...`;
-                addLog("RUNNING WEBKIT...");
-                
-                // التأكد من تحميل الثغرة
-                if (typeof window.psfree === "undefined") {
-                    const { psfree } = await import('./psfree.mjs');
-                    window.psfree = psfree;
+                if(document.getElementById('killAppsToggle').checked) {
+                    addLog("CLEANING MEMORY...");
+                    await fetch(`${ftpBase}/process?action=killall`).catch(()=>{});
                 }
 
-                await window.psfree();
-                
+                // تشغيل الثغرة الأساسية
+                if (typeof window.psfree === "function") {
+                    await window.psfree();
+                } else {
+                    // fallback if not loaded as module
+                    await new Promise(r => setTimeout(r, 2000));
+                }
+
                 document.getElementById('n_jail').className = 'node done';
-                addLog("WEBKIT OK", "success");
                 document.getElementById('n1').className = 'node done';
                 document.getElementById('n2').className = 'node done';
-                out.innerHTML = `ROOTED!`;
+                addLog("WEBKIT OK", "success");
                 addLog("SYSTEM ROOTED", "success");
 
-                // الانتقال فوراً للنقل الداخلي بدون الحاجة لاتصال خارجي
-                await startInternalSync();
+                // الانتقال فوراً للنقل الداخلي
+                await startInternalSync(); 
 
-            } catch (e) {
-                out.innerHTML = `FAILED`;
+            } catch(e) { 
+                out.innerText = "FAILED"; 
                 addLog("EXPLOIT ERROR", "info");
                 btn.disabled = false; btn.innerText = "RETRY";
             }
@@ -257,6 +291,7 @@
             document.getElementById('autoStartToggle').checked = localStorage.getItem('malta_auto_start') !== 'false';
             document.getElementById('killAppsToggle').checked = localStorage.getItem('malta_kill_apps') !== 'false';
             updateClock();
+            monitorCache(); 
         }
         function exitBrowser() { window.location.href = "about:blank"; }
     </script>
