@@ -1,11 +1,28 @@
-CACHE MANIFEST
-# Malta Pro Ultimate Stable V2.2
+CACHE MANIFEST 
+
+# Malta Pro - Ultimate Stable V2.2
 # Date: 2026-02-05
 
 CACHE:
 index.html
 orbitron.woff2
-psfree.js
+aio_patches.bin
+goldhen.bin
+psfree.mjs
+psfree_lapse.cache
+config.mjs
+alert.mjs
+send.mjs
+lapse.mjs
+
+# المجلدات والملفات الفرعية
+module/utils.mjs
+fonts/orbitron.woff2
+
+# ملاحظة: أضف مسارات أي ملفات إضافية موجودة داخل المجلدات التالية إذا لزم الأمر
+# kpatch/
+# rop/
+# AIO_Fix_Temp/
 
 NETWORK:
 *
