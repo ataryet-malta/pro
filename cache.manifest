@@ -1,6 +1,6 @@
 CACHE MANIFEST 
 
-# Malta Pro - Ultimate Stable V2.2
+# Malta Pro - Ultimate Stable V2.2 (Offline Lockdown)
 # Date: 2026-02-05
 
 CACHE:
@@ -28,5 +28,5 @@ NETWORK:
 *
 
 SETTINGS:
-prefer-online
+prefer-offline
 
