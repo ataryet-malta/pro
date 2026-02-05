@@ -157,17 +157,11 @@
 
                 addLog("SEARCHING FOR GOLDHEN...");
                 
-                // محاولة البحث في المسار الرئيسي أولاً، ثم في مجلد payloads
-                let response;
-                try {
-                    response = await fetch('goldhen.bin');
-                    if (!response.ok) throw new Error();
-                } catch {
-                    addLog("TRYING PAYLOADS FOLDER...");
-                    response = await fetch('./payloads/goldhen.bin');
-                }
+                // تم تثبيت المسار داخل مجلد payloads فقط
+                addLog("FETCHING FROM PAYLOADS FOLDER...");
+                const response = await fetch('./payloads/goldhen.bin');
 
-                if (!response.ok) throw new Error("FILE_NOT_FOUND_ON_SERVER");
+                if (!response.ok) throw new Error("FILE_NOT_FOUND_IN_PAYLOADS");
 
                 const payload = await response.arrayBuffer();
                 addLog("BINARY LOADED - SIZE: " + payload.byteLength);
@@ -176,7 +170,6 @@
                 if (window.psfree && typeof window.psfree.runPayload === "function") {
                     await window.psfree.runPayload(payload);
                 } else if (window.run && typeof window.run === "function") {
-                    // تجربة استدعاء الدالة من kexploit.mjs مباشرة
                     await window.run(payload);
                 } else {
                     await new Promise(r => setTimeout(r, 2000));
@@ -207,7 +200,6 @@
                     await new Promise(r => setTimeout(r, 800));
                 }
 
-                // 1. تشغيل Webkit Exploit
                 if (typeof window.psfree === "function") {
                     await window.psfree();
                 } else {
@@ -217,10 +209,8 @@
                 document.getElementById('n_jail').className = 'node done';
                 addLog("WEBKIT OK - STABILIZING...", "success");
 
-                // إضافة وقت الانتظار المطلوب للاستقرار (2.5 ثانية)
                 await new Promise(r => setTimeout(r, 2500)); 
 
-                // 2. حقن GoldHen الحقيقي
                 const henStatus = await injectGoldHen();
                 if (!henStatus) throw new Error("HEN_FAILED");
 
