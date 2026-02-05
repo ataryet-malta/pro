@@ -2,33 +2,60 @@ CACHE MANIFEST
 
 # Malta Pro - Ultimate Stable V2.2 (Offline Lockdown)
 # Date: 2026-02-05
+# Version: 2.2.5 - Full Directory Mapping
 
 CACHE:
+# الملفات الأساسية في الجذر
 index.html
-orbitron.woff2
-psfree.mjs
-psfree_lapse.cache
-aio_patches.bin
-goldhen.bin
 config.mjs
 alert.mjs
 send.mjs
 lapse.mjs
+psfree.mjs
+psfree_lapse.cache
+aio_patches.bin
+goldhen.bin
+orbitron.woff2
+cache.manifest
 
-# المجلدات والملفات الفرعية
+# مجلد module (أساسيات نظام PSFree)
+module/chain.mjs
+module/constants.mjs
+module/int64.mjs
+module/mem.mjs
+module/memtools.mjs
+module/offset.mjs
+module/rw.mjs
 module/utils.mjs
-fonts/orbitron.woff2
+module/view.mjs
+
+# مجلد payloads
 payloads/goldhen.bin
 
-# ملاحظة: أضف مسارات أي ملفات إضافية موجودة داخل المجلدات التالية إذا لزم الأمر
-# kpatch/
-# rop/
-# AIO_Fix_Temp/
+# مجلد fonts
+fonts/FONTS.LICENSE
+fonts/LiberationMono-Regular.ttf
+fonts/README.txt
+
+# مجلد kpatch (ملفات تصحيح النواة)
+kpatch/900.c
+kpatch/900.d
+kpatch/900.elf
+kpatch/900.o
+kpatch/Makefile
+kpatch/script.ld
+kpatch/types.h
+kpatch/utils.h
+
+# مجلد rop
+rop/900.mjs
+
+# مجلد AIO_Fix_Temp
+AIO_Fix_Temp/patch_aio.c
+AIO_Fix_Temp/vfs_aio2_pdtor.c
 
 NETWORK:
 *
 
 SETTINGS:
 prefer-offline
-
-
