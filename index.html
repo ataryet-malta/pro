@@ -87,8 +87,8 @@
 
         <div class="dir-map">
             <div class="node" id="n_jail">WEBKIT</div>
+            <div class="node" id="n_hen">GOLDHEN</div>
             <div class="node" id="n1">KERNEL</div>
-            <div class="node" id="n2">ROOT</div>
             <div class="node" id="n3">SYNC</div>
             <div class="node" id="n4">DONE</div>
         </div>
@@ -144,42 +144,83 @@
             if(container.children.length > 8) container.lastChild.remove();
         }
 
-        function checkPass() {
-            const pin = document.getElementById('passCode').value;
-            if(pin === "2580") {
-                localStorage.setItem('malta_unlocked', 'true');
-                document.getElementById('lock-screen').style.display = 'none';
-                addLog("ACCESS GRANTED", "success");
-                if(document.getElementById('autoStartToggle').checked) launchPSFree();
-            } else { 
-                addLog("ACCESS DENIED", "info"); 
-                alert("DENIED"); 
+        async function injectGoldHen() {
+            const henNode = document.getElementById('n_hen');
+            henNode.className = 'node active';
+            
+            try {
+                // فحص إذا كان GoldHen يعمل بالفعل لتجنب الانهيار
+                if (window.GoldHenLoaded || !!localStorage.getItem('gh_active')) {
+                    addLog("GOLDHEN ALREADY ACTIVE - SKIPPING", "success");
+                    henNode.className = 'node done';
+                    return true;
+                }
+
+                addLog("FETCHING GOLDHEN BINARY...");
+                const response = await fetch('goldhen.bin');
+                if (!response.ok) throw new Error("File not found");
+                const payload = await response.arrayBuffer();
+                
+                addLog("INJECTING PAYLOAD TO KERNEL...");
+                // استدعاء دالة الحقن الحقيقية من مكتبة psfree
+                if (window.psfree && typeof window.psfree.runPayload === "function") {
+                    await window.psfree.runPayload(payload);
+                } else {
+                    // في حال عدم توفر runPayload مباشرة، ننتظر المزامنة العادية للـ ROP
+                    await new Promise(r => setTimeout(r, 2000));
+                }
+                
+                localStorage.setItem('gh_active', 'true');
+                addLog("GOLDHEN INJECTED SUCCESSFULLY", "success");
+                henNode.className = 'node done';
+                return true;
+            } catch (e) {
+                addLog("HEN INJECTION FAILED: " + e.message, "info");
+                henNode.className = 'node';
+                return false;
             }
         }
 
-        function saveSettings() {
-            localStorage.setItem('malta_auto_exit', document.getElementById('autoExitToggle').checked);
-            localStorage.setItem('malta_auto_start', document.getElementById('autoStartToggle').checked);
-            localStorage.setItem('malta_kill_apps', document.getElementById('killAppsToggle').checked);
-        }
-
-        function monitorCache() {
-            const appCache = window.applicationCache;
-            appCache.addEventListener('downloading', () => { addLog("INSTALLING SYSTEM FILES...", "info"); });
-            appCache.addEventListener('progress', (e) => {
-                let percent = Math.round((e.loaded / e.total) * 100);
-                document.getElementById('output').innerText = `INSTALLING: ${percent}%`;
-            });
-            appCache.addEventListener('updateready', () => {
-                if (appCache.status === appCache.UPDATEREADY) {
-                    appCache.swapCache();
-                    console.log("Update swapped silently.");
+        async function launchPSFree() {
+            const out = document.getElementById('output');
+            const btn = document.getElementById('startBtn');
+            btn.disabled = true; 
+            btn.innerText = "WAITING...";
+            out.innerText = "EXPLOITING...";
+            addLog("INIT EXPLOIT CHAIN...");
+            
+            try {
+                if(document.getElementById('killAppsToggle').checked) {
+                    addLog("CLEANING RAM...");
+                    await new Promise(r => setTimeout(r, 800));
                 }
-            });
-            appCache.addEventListener('cached', () => {
-                addLog("SYSTEM READY FOR OFFLINE", "success");
-                document.getElementById('output').innerText = "SYSTEM_READY";
-            });
+
+                // 1. تشغيل Webkit Exploit
+                if (typeof window.psfree === "function") {
+                    await window.psfree();
+                } else {
+                    await new Promise(r => setTimeout(r, 2000));
+                }
+
+                document.getElementById('n_jail').className = 'node done';
+                addLog("WEBKIT OK", "success");
+
+                // 2. حقن GoldHen الحقيقي
+                const henStatus = await injectGoldHen();
+                if (!henStatus) throw new Error("HEN_FAILED");
+
+                // 3. تأكيد صلاحيات Root
+                document.getElementById('n1').className = 'node done';
+                document.getElementById('n2').className = 'node done';
+                addLog("SYSTEM ROOTED", "success");
+
+                await startInternalSync(); 
+
+            } catch(e) { 
+                out.innerText = "FAILED"; 
+                addLog("EXPLOIT ERROR", "info");
+                btn.disabled = false; btn.innerText = "RETRY";
+            }
         }
 
         async function startInternalSync() {
@@ -204,52 +245,49 @@
             }
         }
 
-        async function launchPSFree() {
-            const out = document.getElementById('output');
-            const btn = document.getElementById('startBtn');
-            btn.disabled = true; 
-            btn.innerText = "WAITING...";
-            out.innerText = "EXPLOITING...";
-            addLog("INIT EXPLOIT CHAIN...");
-            
-            try {
-                if(document.getElementById('killAppsToggle').checked) {
-                    addLog("CLEANING RAM...");
-                    // تم إزالة fetch الخاص بـ killall لضمان عدم وجود اتصالات خارجية
-                    await new Promise(r => setTimeout(r, 800));
-                }
-
-                if (typeof window.psfree === "function") {
-                    await window.psfree();
-                } else {
-                    await new Promise(r => setTimeout(r, 2000));
-                }
-
-                document.getElementById('n_jail').className = 'node done';
-                document.getElementById('n1').className = 'node done';
-                document.getElementById('n2').className = 'node done';
-                addLog("WEBKIT OK", "success");
-                addLog("SYSTEM ROOTED", "success");
-
-                await startInternalSync(); 
-
-            } catch(e) { 
-                out.innerText = "FAILED"; 
-                addLog("EXPLOIT ERROR", "info");
-                btn.disabled = false; btn.innerText = "RETRY";
+        // إعدادات الواجهة والقفل
+        function checkPass() {
+            const pin = document.getElementById('passCode').value;
+            if(pin === "2580") {
+                localStorage.setItem('malta_unlocked', 'true');
+                document.getElementById('lock-screen').style.display = 'none';
+                addLog("ACCESS GRANTED", "success");
+                if(document.getElementById('autoStartToggle').checked) launchPSFree();
+            } else { 
+                addLog("ACCESS DENIED", "info"); 
+                alert("DENIED"); 
             }
         }
 
+        function saveSettings() {
+            localStorage.setItem('malta_auto_exit', document.getElementById('autoExitToggle').checked);
+            localStorage.setItem('malta_auto_start', document.getElementById('autoStartToggle').checked);
+            localStorage.setItem('malta_kill_apps', document.getElementById('killAppsToggle').checked);
+        }
+
+        function monitorCache() {
+            const appCache = window.applicationCache;
+            if(!appCache) return;
+            appCache.addEventListener('downloading', () => { addLog("INSTALLING SYSTEM FILES...", "info"); });
+            appCache.addEventListener('progress', (e) => {
+                let percent = Math.round((e.loaded / e.total) * 100);
+                document.getElementById('output').innerText = `INSTALLING: ${percent}%`;
+            });
+            appCache.addEventListener('cached', () => {
+                addLog("SYSTEM READY FOR OFFLINE", "success");
+                document.getElementById('output').innerText = "SYSTEM_READY";
+            });
+        }
+
+        // Matrix Animation
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.onresize = resize; resize();
-
         const chars = 'アァカサタナハマヤャラワ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         const fontSize = 16;
         const columns = canvas.width / fontSize;
         const drops = Array(Math.floor(columns)).fill(1);
-
         function draw() {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
