@@ -14,7 +14,7 @@ lapse.mjs
 psfree.mjs
 psfree_lapse.cache
 aio_patches.bin
-goldhen.bin
+1goldhen.bin
 orbitron.woff2
 cache.manifest
 
@@ -59,3 +59,4 @@ NETWORK:
 
 SETTINGS:
 prefer-offline
+
