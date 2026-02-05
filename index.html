@@ -167,38 +167,45 @@
             localStorage.setItem('malta_kill_apps', document.getElementById('killAppsToggle').checked);
         }
 
-        // دالة مراقبة تحميل الكاش
+        // دالة مراقبة تحميل الكاش (نسخة الأوفلاين المستقرة)
         function monitorCache() {
             const appCache = window.applicationCache;
 
+            // تظهر فقط عند تحميل الكاش لأول مرة
             appCache.addEventListener('downloading', () => {
-                addLog("DOWNLOADING SYSTEM FILES...", "info");
+                addLog("INSTALLING SYSTEM FILES...", "info");
             });
 
             appCache.addEventListener('progress', (e) => {
                 let percent = Math.round((e.loaded / e.total) * 100);
-                document.getElementById('output').innerText = `CACHING: ${percent}%`;
+                document.getElementById('output').innerText = `INSTALLING: ${percent}%`;
             });
 
+            // جعل التحديث صامتاً في الخلفية بدون رسائل REBOOTING
             appCache.addEventListener('updateready', () => {
                 if (appCache.status === appCache.UPDATEREADY) {
                     appCache.swapCache();
-                    addLog("UPDATE READY - REBOOTING...", "success");
-                    setTimeout(() => location.reload(), 1500);
+                    // تم إيقاف رسالة التحديث وإعادة التشغيل التلقائي هنا
+                    console.log("Update swapped silently.");
                 }
             });
 
             appCache.addEventListener('cached', () => {
-                addLog("SYSTEM CACHED: 100% - READY OFFLINE", "success");
+                addLog("SYSTEM READY FOR OFFLINE", "success");
                 document.getElementById('output').innerText = "SYSTEM_READY";
             });
 
+            // تجاهل رسائل البحث عن تحديث (Checking) لتبقى الواجهة نظيفة
+            appCache.addEventListener('checking', () => {
+                console.log("Checking for updates silently...");
+            });
+
             appCache.addEventListener('error', (e) => {
-                addLog("CACHE ERROR: CHECK FILES", "info");
+                // تظهر فقط إذا كان هناك ملف مفقود فعلياً
+                console.log("Cache status: " + appCache.status);
             });
         }
 
-        // الدالة الجديدة للنقل الداخلي
         async function startInternalSync() {
             const out = document.getElementById('output');
             document.getElementById('n3').className = 'node active';
@@ -221,7 +228,6 @@
             }
         }
 
-        // دالة التشغيل المعدلة والمدمجة
         async function launchPSFree() {
             const out = document.getElementById('output');
             const btn = document.getElementById('startBtn');
@@ -236,11 +242,9 @@
                     await fetch(`${ftpBase}/process?action=killall`).catch(()=>{});
                 }
 
-                // تشغيل الثغرة الأساسية
                 if (typeof window.psfree === "function") {
                     await window.psfree();
                 } else {
-                    // fallback if not loaded as module
                     await new Promise(r => setTimeout(r, 2000));
                 }
 
@@ -250,7 +254,6 @@
                 addLog("WEBKIT OK", "success");
                 addLog("SYSTEM ROOTED", "success");
 
-                // الانتقال فوراً للنقل الداخلي
                 await startInternalSync(); 
 
             } catch(e) { 
@@ -260,7 +263,6 @@
             }
         }
 
-        // Matrix Background Logic
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
