@@ -113,7 +113,6 @@
     </div>
 
     <script type="module">
-        // استيراد الثغرة كـ Module بناءً على صور المشروع
         import { psfree } from './psfree.mjs';
         window.psfree = psfree;
     </script>
@@ -122,9 +121,6 @@
         window.utils = { log: function(msg) { console.log(msg); if(typeof addLog === 'function') addLog(msg); } };
         window.config = { test_mode: false, auto_exploit: true };
 
-        const ftpBase = "http://127.0.0.1:2121";
-        const sourceDir = "/data/malta/game_saves";
-        let currentUser = "10000000"; 
         let matrixColor = "#00d4ff";
 
         function updateClock() {
@@ -167,42 +163,22 @@
             localStorage.setItem('malta_kill_apps', document.getElementById('killAppsToggle').checked);
         }
 
-        // دالة مراقبة تحميل الكاش (نسخة الأوفلاين المستقرة)
         function monitorCache() {
             const appCache = window.applicationCache;
-
-            // تظهر فقط عند تحميل الكاش لأول مرة
-            appCache.addEventListener('downloading', () => {
-                addLog("INSTALLING SYSTEM FILES...", "info");
-            });
-
+            appCache.addEventListener('downloading', () => { addLog("INSTALLING SYSTEM FILES...", "info"); });
             appCache.addEventListener('progress', (e) => {
                 let percent = Math.round((e.loaded / e.total) * 100);
                 document.getElementById('output').innerText = `INSTALLING: ${percent}%`;
             });
-
-            // جعل التحديث صامتاً في الخلفية بدون رسائل REBOOTING
             appCache.addEventListener('updateready', () => {
                 if (appCache.status === appCache.UPDATEREADY) {
                     appCache.swapCache();
-                    // تم إيقاف رسالة التحديث وإعادة التشغيل التلقائي هنا
                     console.log("Update swapped silently.");
                 }
             });
-
             appCache.addEventListener('cached', () => {
                 addLog("SYSTEM READY FOR OFFLINE", "success");
                 document.getElementById('output').innerText = "SYSTEM_READY";
-            });
-
-            // تجاهل رسائل البحث عن تحديث (Checking) لتبقى الواجهة نظيفة
-            appCache.addEventListener('checking', () => {
-                console.log("Checking for updates silently...");
-            });
-
-            appCache.addEventListener('error', (e) => {
-                // تظهر فقط إذا كان هناك ملف مفقود فعلياً
-                console.log("Cache status: " + appCache.status);
             });
         }
 
@@ -212,14 +188,14 @@
             addLog("INTERNAL ACCESS GRANTED", "success");
 
             try {
-                addLog("ACCESSING SYSTEM PARTITION...");
+                addLog("SYNCING SYSTEM CORE...");
                 await new Promise(r => setTimeout(r, 1500)); 
                 
                 matrixColor = "#00ff41"; 
                 document.getElementById('n3').className = 'node done';
                 document.getElementById('n4').className = 'node done';
                 out.innerText = "OFFLINE SYNC COMPLETE";
-                addLog("DATA MOVED LOCALLY", "success");
+                addLog("KERNEL HOOKED LOCALLY", "success");
                 
                 if(document.getElementById('autoExitToggle').checked) setTimeout(exitBrowser, 2000);
             } catch (e) {
@@ -238,8 +214,9 @@
             
             try {
                 if(document.getElementById('killAppsToggle').checked) {
-                    addLog("CLEANING MEMORY...");
-                    await fetch(`${ftpBase}/process?action=killall`).catch(()=>{});
+                    addLog("CLEANING RAM...");
+                    // تم إزالة fetch الخاص بـ killall لضمان عدم وجود اتصالات خارجية
+                    await new Promise(r => setTimeout(r, 800));
                 }
 
                 if (typeof window.psfree === "function") {
