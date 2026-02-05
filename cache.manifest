@@ -6,10 +6,10 @@ CACHE MANIFEST
 CACHE:
 index.html
 orbitron.woff2
-aio_patches.bin
-goldhen.bin
 psfree.mjs
 psfree_lapse.cache
+aio_patches.bin
+goldhen.bin
 config.mjs
 alert.mjs
 send.mjs
@@ -29,3 +29,4 @@ NETWORK:
 
 SETTINGS:
 prefer-online
+
