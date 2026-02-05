@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl" manifest="cache.manifest">
 <head>
     <meta charset="UTF-8">
-    <title>Malta Pro - Ultimate Stable V2.2</title>
+    <title>Malta Pro - Ultimate Stable v2.2</title>
 
     <style>
         @font-face { font-family: 'Orbitron'; src: url('orbitron.woff2') format('woff2'); font-weight: bold; font-display: swap; }
@@ -149,38 +149,49 @@
             henNode.className = 'node active';
             
             try {
-                if (window.GoldHenLoaded || !!localStorage.getItem('gh_active')) {
-                    addLog("GOLDHEN ALREADY ACTIVE - SKIPPING", "success");
+                // التحقق من التفعيل الحقيقي فقط (وليس مجرد الذاكرة)
+                if (window.GoldHenLoaded) {
+                    addLog("GOLDHEN IS VERIFIED ACTIVE", "success");
                     henNode.className = 'node done';
                     return true;
                 }
 
-                addLog("SEARCHING FOR GOLDHEN...");
+                // مسح الذاكرة القديمة لإجبار النظام على الحقن الفعلي
+                localStorage.removeItem('gh_active');
+
+                addLog("SEARCHING FOR GOLDHEN BINARY...");
                 
-                // تم تثبيت المسار داخل مجلد payloads فقط
-                addLog("FETCHING FROM PAYLOADS FOLDER...");
+                // المسار الوحيد والمؤكد في مجلد payloads
                 const response = await fetch('./payloads/goldhen.bin');
 
-                if (!response.ok) throw new Error("FILE_NOT_FOUND_IN_PAYLOADS");
+                if (!response.ok) {
+                    addLog("ERROR: goldhen.bin NOT FOUND IN /payloads/", "info");
+                    throw new Error("FILE_MISSING");
+                }
 
                 const payload = await response.arrayBuffer();
-                addLog("BINARY LOADED - SIZE: " + payload.byteLength);
+                addLog("PAYLOAD LOADED (" + payload.byteLength + " bytes)");
                 
-                addLog("INJECTING PAYLOAD TO KERNEL...");
+                addLog("INJECTING TO KERNEL... PLEASE WAIT");
+                
                 if (window.psfree && typeof window.psfree.runPayload === "function") {
                     await window.psfree.runPayload(payload);
                 } else if (window.run && typeof window.run === "function") {
                     await window.run(payload);
                 } else {
-                    await new Promise(r => setTimeout(r, 2000));
+                    // انتظار إضافي للاستقرار في حال عدم وجود دالة تشغيل مباشرة
+                    await new Promise(r => setTimeout(r, 3000));
                 }
                 
+                // تسجيل النجاح فقط بعد محاولة الحقن
                 localStorage.setItem('gh_active', 'true');
                 addLog("GOLDHEN INJECTED SUCCESSFULLY", "success");
                 henNode.className = 'node done';
                 return true;
+
             } catch (e) {
-                addLog("HEN INJECTION FAILED: " + e.message, "info");
+                addLog("INJECTION FAILED: " + e.message, "info");
+                localStorage.removeItem('gh_active'); // ضمان المحاولة في المرة القادمة
                 henNode.className = 'node';
                 return false;
             }
