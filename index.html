@@ -149,7 +149,6 @@
             henNode.className = 'node active';
             
             try {
-                // التحقق من التفعيل الحقيقي
                 if (window.GoldHenLoaded) {
                     addLog("GOLDHEN IS VERIFIED ACTIVE", "success");
                     henNode.className = 'node done';
@@ -164,26 +163,19 @@
 
                 const payload = await response.arrayBuffer();
                 addLog("PAYLOAD READY: " + payload.byteLength + " BYTES");
-                
-                // --- تعديل جوهري هنا لضمان التنفيذ ---
                 addLog("EXECUTING KERNEL PAYLOAD...");
                 
                 if (window.psfree && typeof window.psfree.runPayload === "function") {
-                    // الطريقة الأولى
                     await window.psfree.runPayload(payload);
                 } else if (typeof window.runPayload === "function") {
-                    // الطريقة الثانية
                     await window.runPayload(payload);
                 } else if (typeof window.PL_INFO !== 'undefined') {
-                    // الطريقة الثالثة (لبعض نسخ Kexploit)
                     window.payload_buffer = payload;
                     addLog("BUFFER ASSIGNED - TRIGGERING...");
                 } else if (window.run && typeof window.run === "function") {
-                    // الطريقة الرابعة
                     await window.run(payload);
                 }
 
-                // إعطاء النواة وقت لمعالجة الملف قبل إعطاء رسالة النجاح
                 await new Promise(r => setTimeout(r, 4000)); 
                 
                 localStorage.setItem('gh_active', 'true');
@@ -213,6 +205,7 @@
                     await new Promise(r => setTimeout(r, 800));
                 }
 
+                addLog("TRIGGERING WEBKIT...");
                 if (typeof window.psfree === "function") {
                     await window.psfree();
                 } else {
@@ -220,10 +213,10 @@
                 }
 
                 document.getElementById('n_jail').className = 'node done';
-                addLog("WEBKIT OK - STABILIZING...", "success");
+                addLog("WEBKIT SUCCESS. WAITING FOR MEMORY...", "success");
 
-                // زيادة وقت الاستقرار قبل الحقن لضمان استجابة النواة
-                await new Promise(r => setTimeout(r, 3000)); 
+                // زيادة وقت الاستقرار لضمان استجابة النواة وتجنب Exploit Error
+                await new Promise(r => setTimeout(r, 8000)); 
 
                 const henStatus = await injectGoldHen();
                 if (!henStatus) throw new Error("HEN_FAILED");
