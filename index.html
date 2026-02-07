@@ -3,88 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <title>Malta Pro - Ultimate Stable v2.2</title>
-
     <style>
         @font-face { font-family: 'Orbitron'; src: url('orbitron.woff2') format('woff2'); font-weight: bold; font-display: swap; }
         :root { --neon-blue: #00d4ff; --neon-green: #00ff41; --neon-red: #ff4141; --bg-color: #020202; }
-        
         body { background: var(--bg-color); color: #FFFFFF; font-family: 'Orbitron', sans-serif; margin: 0; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; overflow: hidden; position: fixed; }
         #matrix-canvas { position: fixed; inset: 0; z-index: -1; opacity: 0.15; }
-
-        .terminal { 
-            background: rgba(5, 5, 5, 0.9); backdrop-filter: blur(15px); border: 1px solid rgba(0, 212, 255, 0.3); 
-            padding: 20px 40px; border-radius: 20px; width: 620px; height: 540px; box-shadow: 0 0 50px rgba(0, 212, 255, 0.15);
-            position: relative; display: flex; flex-direction: column; align-items: center; z-index: 10;
-        }
-
+        .terminal { background: rgba(5, 5, 5, 0.9); backdrop-filter: blur(15px); border: 1px solid rgba(0, 212, 255, 0.3); padding: 20px 40px; border-radius: 20px; width: 620px; height: 540px; box-shadow: 0 0 50px rgba(0, 212, 255, 0.15); position: relative; display: flex; flex-direction: column; align-items: center; z-index: 10; }
         .main-title { font-size: 2.5em; letter-spacing: 8px; margin: 15px 0 5px 0; color: var(--neon-blue); text-shadow: 0 0 15px var(--neon-blue); }
         .sub-title { font-size: 0.7em; color: #555; margin-bottom: 15px; letter-spacing: 4px; font-weight: bold; }
-
-        .master-btn { 
-            width: 140px; height: 140px; border-radius: 50%; border: 2px solid var(--neon-blue); background: transparent; 
-            color: #FFFFFF; font-family: 'Orbitron'; font-size: 1em; font-weight: bold; cursor: pointer; transition: 0.4s; margin: 10px 0;
-            text-shadow: 0 0 10px var(--neon-blue); animation: scan 3s infinite linear; position: relative;
-        }
+        .master-btn { width: 140px; height: 140px; border-radius: 50%; border: 2px solid var(--neon-blue); background: transparent; color: #FFFFFF; font-family: 'Orbitron'; font-size: 1em; font-weight: bold; cursor: pointer; transition: 0.4s; margin: 10px 0; text-shadow: 0 0 10px var(--neon-blue); animation: scan 3s infinite linear; position: relative; }
         .master-btn:disabled { border-color: #333; color: #444; text-shadow: none; animation: none; cursor: not-allowed; }
-
         .dir-map { display: flex; flex-direction: row; justify-content: center; gap: 6px; margin: 15px 0; width: 100%; direction: ltr; }
         .node { flex: 1; height: 30px; background: rgba(255,255,255,0.02); border: 1px solid #222; border-radius: 4px; font-size: 0.5em; display: flex; align-items: center; justify-content: center; color: #444; transition: 0.5s; }
         .node.active { border-color: var(--neon-blue); color: #FFF; background: rgba(0,212,255,0.15); box-shadow: 0 0 10px var(--neon-blue); }
         .node.done { border-color: var(--neon-green); color: var(--neon-green); background: rgba(0,255,65,0.05); }
-
         #output { background: rgba(0,0,0,0.5); border-radius: 5px; padding: 10px; width: 95%; height: 40px; font-family: monospace; font-size: 10px; color: var(--neon-green); margin-top: 10px; display: flex; align-items: center; justify-content: center; letter-spacing: 1px; }
-
-        #left-smart-report { 
-            position: fixed; left: 20px; top: 30px; bottom: 30px; width: auto; max-width: 450px;
-            display: flex; flex-direction: column; gap: 10px; pointer-events: none; z-index: 100;
-        }
-        .log-entry { 
-            background: rgba(0, 15, 25, 0.95); border-left: 4px solid var(--neon-blue); 
-            padding: 12px 20px; font-size: 0.75em; font-family: 'Orbitron', monospace; 
-            animation: slideIn 0.3s ease-out forwards; color: #FFF;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5); backdrop-filter: blur(10px);
-            border-radius: 2px; line-height: 1.4; text-transform: uppercase;
-            letter-spacing: 1px; width: max-content; min-width: 250px;
-            direction: ltr; text-align: left;
-            white-space: nowrap; overflow: visible;
-        }
+        #left-smart-report { position: fixed; left: 20px; top: 30px; bottom: 30px; width: auto; max-width: 450px; display: flex; flex-direction: column; gap: 10px; pointer-events: none; z-index: 100; }
+        .log-entry { background: rgba(0, 15, 25, 0.95); border-left: 4px solid var(--neon-blue); padding: 12px 20px; font-size: 0.75em; font-family: 'Orbitron', monospace; animation: slideIn 0.3s ease-out forwards; color: #FFF; box-shadow: 0 5px 15px rgba(0,0,0,0.5); backdrop-filter: blur(10px); border-radius: 2px; line-height: 1.4; text-transform: uppercase; letter-spacing: 1px; width: max-content; min-width: 250px; direction: ltr; text-align: left; white-space: nowrap; overflow: visible; }
         .log-entry.success { border-left-color: var(--neon-green); text-shadow: 0 0 8px var(--neon-green); }
         .log-entry.info { border-left-color: var(--neon-blue); text-shadow: 0 0 8px var(--neon-blue); }
-
-        #cyber-clock {
-            position: absolute; top: 15px; right: 25px; 
-            font-size: 1.2em; color: var(--neon-blue); 
-            font-family: monospace; letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
-        }
-
+        #cyber-clock { position: absolute; top: 15px; right: 25px; font-size: 1.2em; color: var(--neon-blue); font-family: monospace; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
         @keyframes slideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes scan { 0% { box-shadow: 0 0 5px var(--neon-blue); } 50% { box-shadow: 0 0 20px var(--neon-blue); } 100% { box-shadow: 0 0 5px var(--neon-blue); } }
-
         .option-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #111; width: 100%; }
         .palette-btn { background: #111; border: 1px solid #333; color: #777; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-family: 'Orbitron'; font-size: 0.6em; }
         .check-container { font-size: 9px; color: #555; display: flex; align-items: center; gap: 4px; }
-
         #lock-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
         .lock-input { background: #050505; border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 12px; text-align: center; font-family: 'Orbitron'; border-radius: 5px; width: 220px; margin-bottom: 15px; font-size: 1.2em; }
     </style>
 </head>
 <body onload="initApp()">
-
     <div id="lock-screen">
         <h2 style="letter-spacing: 8px; color: #FFF;">TERMINAL LOCKED</h2>
         <input type="password" id="passCode" class="lock-input" placeholder="PINCODE">
         <button class="palette-btn" style="color: var(--neon-blue); border-color: var(--neon-blue);" onclick="checkPass()">ACCESS SYSTEM</button>
     </div>
-
     <canvas id="matrix-canvas"></canvas>
     <div id="left-smart-report"></div>
-
     <div class="terminal">
         <div id="cyber-clock">00:00:00.000</div>
         <h1 class="main-title">MALTA PRO</h1>
         <p class="sub-title">STABLE SYSTEM V2</p>
-
         <div class="dir-map">
             <div class="node" id="n_jail">WEBKIT</div>
             <div class="node" id="n_hen">GOLDHEN</div>
@@ -92,15 +51,12 @@
             <div class="node" id="n3">SYNC</div>
             <div class="node" id="n4">DONE</div>
         </div>
-
         <button id="startBtn" class="master-btn" onclick="launchPSFree()">EXECUTE</button>
         <div id="output">SYSTEM_STANDBY</div>
-
         <div id="smart-monitor" style="margin-top: 15px; font-size: 0.7em; display: flex; gap: 30px; color: #444;">
             <span>SAVES: <b id="copied-counter" style="color:var(--neon-green)">0</b></span>
             <span>STATUS: <b id="system-live-status" style="color:var(--neon-blue)">READY</b></span>
         </div>
-
         <div class="option-group">
             <button class="palette-btn" onclick="location.reload()">REBOOT</button>
             <button class="palette-btn" style="color: var(--neon-red)" onclick="exitBrowser()">EXIT</button>
@@ -115,12 +71,12 @@
     <script type="module">
         import { psfree } from './psfree.mjs';
         window.psfree = psfree;
+        if (typeof psfree.runPayload === 'function') window.runPayload = psfree.runPayload;
     </script>
 
     <script>
         window.utils = { log: function(msg) { console.log(msg); if(typeof addLog === 'function') addLog(msg); } };
         window.config = { test_mode: false, auto_exploit: true };
-
         let matrixColor = "#00d4ff";
 
         function updateClock() {
@@ -147,45 +103,27 @@
         async function injectGoldHen() {
             const henNode = document.getElementById('n_hen');
             henNode.className = 'node active';
-            
             try {
-                if (window.GoldHenLoaded) {
-                    addLog("GOLDHEN IS VERIFIED ACTIVE", "success");
-                    henNode.className = 'node done';
-                    return true;
-                }
-
-                localStorage.removeItem('gh_active');
                 addLog("FETCHING GOLDHEN FROM /payloads/...");
-                
                 const response = await fetch('./payloads/goldhen.bin');
                 if (!response.ok) throw new Error("FILE_MISSING");
-
                 const payload = await response.arrayBuffer();
                 addLog("PAYLOAD READY: " + payload.byteLength + " BYTES");
-                addLog("EXECUTING KERNEL PAYLOAD...");
                 
                 if (window.psfree && typeof window.psfree.runPayload === "function") {
                     await window.psfree.runPayload(payload);
-                } else if (typeof window.runPayload === "function") {
+                } else if (window.runPayload) {
                     await window.runPayload(payload);
-                } else if (typeof window.PL_INFO !== 'undefined') {
-                    window.payload_buffer = payload;
-                    addLog("BUFFER ASSIGNED - TRIGGERING...");
-                } else if (window.run && typeof window.run === "function") {
-                    await window.run(payload);
+                } else {
+                    throw new Error("KEX_BRIDGE_MISSING");
                 }
 
                 await new Promise(r => setTimeout(r, 4000)); 
-                
-                localStorage.setItem('gh_active', 'true');
-                addLog("INJECTION SENT TO KERNEL", "success");
+                addLog("INJECTION SUCCESSFUL", "success");
                 henNode.className = 'node done';
                 return true;
-
             } catch (e) {
                 addLog("INJECTION ERROR: " + e.message, "info");
-                localStorage.removeItem('gh_active');
                 henNode.className = 'node';
                 return false;
             }
@@ -194,41 +132,32 @@
         async function launchPSFree() {
             const out = document.getElementById('output');
             const btn = document.getElementById('startBtn');
-            btn.disabled = true; 
-            btn.innerText = "WAITING...";
+            btn.disabled = true; btn.innerText = "WAITING...";
             out.innerText = "EXPLOITING...";
             addLog("INIT EXPLOIT CHAIN...");
-            
             try {
                 if(document.getElementById('killAppsToggle').checked) {
                     addLog("CLEANING RAM...");
                     await new Promise(r => setTimeout(r, 800));
                 }
-
                 addLog("TRIGGERING WEBKIT...");
                 if (typeof window.psfree === "function") {
                     await window.psfree();
                 } else {
-                    await new Promise(r => setTimeout(r, 2000));
+                    throw new Error("JS_CORE_NOT_LOADED");
                 }
-
                 document.getElementById('n_jail').className = 'node done';
-                addLog("WEBKIT SUCCESS. WAITING FOR MEMORY...", "success");
-
-                // زيادة وقت الاستقرار لضمان استجابة النواة وتجنب Exploit Error
+                addLog("WEBKIT SUCCESS. STABILIZING...", "success");
                 await new Promise(r => setTimeout(r, 8000)); 
 
                 const henStatus = await injectGoldHen();
                 if (!henStatus) throw new Error("HEN_FAILED");
-
                 document.getElementById('n1').className = 'node done';
                 addLog("SYSTEM ROOTED", "success");
-
                 await startInternalSync(); 
-
             } catch(e) { 
                 out.innerText = "FAILED"; 
-                addLog("EXPLOIT ERROR", "info");
+                addLog("EXPLOIT ERROR: " + e.message, "info");
                 btn.disabled = false; btn.innerText = "RETRY";
             }
         }
@@ -236,23 +165,15 @@
         async function startInternalSync() {
             const out = document.getElementById('output');
             document.getElementById('n3').className = 'node active';
-            addLog("INTERNAL ACCESS GRANTED", "success");
-
             try {
-                addLog("SYNCING SYSTEM CORE...");
+                addLog("SYNCING CORE...");
                 await new Promise(r => setTimeout(r, 1500)); 
-                
                 matrixColor = "#00ff41"; 
                 document.getElementById('n3').className = 'node done';
                 document.getElementById('n4').className = 'node done';
-                out.innerText = "OFFLINE SYNC COMPLETE";
-                addLog("KERNEL HOOKED LOCALLY", "success");
-                
+                out.innerText = "COMPLETE";
                 if(document.getElementById('autoExitToggle').checked) setTimeout(exitBrowser, 2000);
-            } catch (e) {
-                addLog("SYNC FAILED: MEMORY ERROR", "info");
-                out.innerText = "RETRY";
-            }
+            } catch (e) { out.innerText = "RETRY"; }
         }
 
         function checkPass() {
@@ -262,10 +183,7 @@
                 document.getElementById('lock-screen').style.display = 'none';
                 addLog("ACCESS GRANTED", "success");
                 if(document.getElementById('autoStartToggle').checked) launchPSFree();
-            } else { 
-                addLog("ACCESS DENIED", "info"); 
-                alert("DENIED"); 
-            }
+            } else { addLog("ACCESS DENIED", "info"); }
         }
 
         function saveSettings() {
@@ -274,36 +192,18 @@
             localStorage.setItem('malta_kill_apps', document.getElementById('killAppsToggle').checked);
         }
 
-        function monitorCache() {
-            const appCache = window.applicationCache;
-            if(!appCache) return;
-            appCache.addEventListener('downloading', () => { addLog("INSTALLING SYSTEM FILES...", "info"); });
-            appCache.addEventListener('progress', (e) => {
-                let percent = Math.round((e.loaded / e.total) * 100);
-                document.getElementById('output').innerText = `INSTALLING: ${percent}%`;
-            });
-            appCache.addEventListener('cached', () => {
-                addLog("SYSTEM READY FOR OFFLINE", "success");
-                document.getElementById('output').innerText = "SYSTEM_READY";
-            });
-        }
-
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.onresize = resize; resize();
-        const chars = 'アァカサタナハマヤャラワ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const chars = 'アァカサタナハマヤャラワ0123456789';
         const fontSize = 16;
-        const columns = canvas.width / fontSize;
-        const drops = Array(Math.floor(columns)).fill(1);
+        const drops = Array(Math.floor(canvas.width/fontSize)).fill(1);
         function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = matrixColor;
-            ctx.font = fontSize + 'px monospace';
+            ctx.fillStyle = 'rgba(0,0,0,0.05)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = matrixColor; ctx.font = fontSize+'px monospace';
             for(let i=0; i<drops.length; i++) {
-                const text = chars[Math.floor(Math.random()*chars.length)];
-                ctx.fillText(text, i*fontSize, drops[i]*fontSize);
+                ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*fontSize, drops[i]*fontSize);
                 if(drops[i]*fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
                 drops[i]++;
             }
@@ -316,7 +216,6 @@
             document.getElementById('autoStartToggle').checked = localStorage.getItem('malta_auto_start') !== 'false';
             document.getElementById('killAppsToggle').checked = localStorage.getItem('malta_kill_apps') !== 'false';
             updateClock();
-            monitorCache(); 
         }
         function exitBrowser() { window.location.href = "about:blank"; }
     </script>
