@@ -131,3 +131,5 @@ export class Int {
         return '0x' + high + '_' + low;
     }
 }
+// في نهاية ملف int64.mjs
+export { Int64 };
