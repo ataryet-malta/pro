@@ -132,4 +132,4 @@ export class Int {
     }
 }
 // في نهاية ملف int64.mjs
-export { Int64 };
+export { Int as Int64 };
