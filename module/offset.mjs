@@ -53,10 +53,17 @@ export const size_jsta = 0x20;
 
 // WebKit offsets end
 
+// Kernel Offsets & Memory Constants
 export const KB = 1024;
 export const MB = KB * KB;
 export const GB = KB * KB * KB;
-export const page_size = 16 * KB; // page size on the ps4
+
+// تصحيح حجم الصفحة ليتوافق مع معالج AMD Jaguar
+export const page_size = 4 * KB; 
+
+// العناوين الأساسية للنواة (Kernel Base)
+export const kaslr_offset = 0x0; 
+export const kernel_base = 0xFFFFFFFF80000000; // عنوان النواة الافتراضي لكسر الحماية
 
 // size of the buffer used by setcontext/getcontext (see module/chain.mjs)
 export const context_size = 0xc8;
