@@ -75,9 +75,15 @@
     </script>
 
     <script>
-        window.utils = { log: function(msg) { console.log(msg); if(typeof addLog === 'function') addLog(msg); } };
-        window.config = { test_mode: false, auto_exploit: true };
-        let matrixColor = "#00d4ff";
+        window.utils = { 
+            log: function(msg) { 
+                console.log(msg); 
+        // تأكد أن الدالة لا تحاول الوصول لـ console.innerHTML
+                if(typeof addLog === 'function') {
+                    addLog(msg); 
+        }
+    } 
+};
 
         function updateClock() {
             const now = new Date();
@@ -221,3 +227,4 @@
     </script>
 </body>
 </html>
+
